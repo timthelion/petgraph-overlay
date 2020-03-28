@@ -46,7 +46,7 @@ where
     <&'a G as GraphBase>::NodeId: Hash + Eq,
     <&'a G as GraphBase>::EdgeId: Hash + Eq,
 {
-    fn overlayed_elements(&'a self) -> OverlayedItems<'a, G, NOW, EOW> {
+    pub fn overlayed_elements(&'a self) -> OverlayedItems<'a, G, NOW, EOW> {
         OverlayedItems {
             overlay: self,
             phase: Phase::Nodes(self.nodes.iter()),
@@ -60,11 +60,11 @@ where
     pub fn overlay_node<'b>(&'b mut self, node: <&'a G as GraphBase>::NodeId, now: NOW) {
         self.nodes.insert(node, now);
     }
-    fn remove_edge<'b>(&'b mut self, edge: <&'a G as GraphBase>::EdgeId) {
+    pub fn remove_edge<'b>(&'b mut self, edge: <&'a G as GraphBase>::EdgeId) {
         self.edges.remove(&edge);
         self.edge_refs.remove(&edge);
     }
-    fn remove_node<'b>(&'b mut self, node: <&'a G as GraphBase>::NodeId) {
+    pub fn remove_node<'b>(&'b mut self, node: <&'a G as GraphBase>::NodeId) {
         self.nodes.remove(&node);
     }
 }
@@ -83,7 +83,7 @@ where
     <&'a G as Data>::NodeWeight: std::fmt::Display,
     <&'a G as Data>::EdgeWeight: std::fmt::Display,
 {
-    fn draw_overlayed<'b>(&'b self) {
+    pub fn draw_overlayed<'b>(&'b self) {
         draw_graph_with_attr_getters(
             self.graph,
             &[],
