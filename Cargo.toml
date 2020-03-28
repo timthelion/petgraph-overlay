@@ -1,0 +1,18 @@
+[package]
+name = "petgraph-overlay"
+version = "0.1.0"
+authors = ["Timothy Hobbs"]
+edition = "2018"
+license-file = "COPYING.LGPL"
+license = "LGPL-3.0-or-later"
+description = "Overlay information onto graphs and select subgraphs of graphs"
+homepage = "https://github.com/timthelion/petgraph-overlay"
+repository = "https://github.com/timthelion/petgraph-overlay"
+
+[dependencies]
+petgraph = {path="../petgraph"}
+petgraph-fsm = {path="../petgraph-fsm"}
+petgraph-evcxr = {path="../petgraph-evcxr"}
+
+[dev-dependencies]
+petgraph-examples = {path="../petgraph-examples"} 
