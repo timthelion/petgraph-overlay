@@ -11,7 +11,6 @@ repository = "https://github.com/timthelion/petgraph-overlay"
 
 [dependencies]
 petgraph = {path="../petgraph"}
-petgraph-fsm = {path="../petgraph-fsm"}
 petgraph-evcxr = {path="../petgraph-evcxr"}
 
 [dev-dependencies]

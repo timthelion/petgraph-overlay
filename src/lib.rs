@@ -9,14 +9,14 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 #[derive(Clone)]
-pub struct Overlay<'a, G, NOW, EOW>
+pub struct Overlay<G, NOW, EOW>
 where
-    &'a G: GraphBase + Data + IntoEdgeReferences,
+    G: GraphBase + Data + IntoEdgeReferences,
 {
-    nodes: HashMap<<&'a G as GraphBase>::NodeId, NOW>,
-    edges: HashMap<<&'a G as GraphBase>::EdgeId, EOW>,
-    edge_refs: HashMap<<&'a G as GraphBase>::EdgeId, <&'a G as IntoEdgeReferences>::EdgeRef>,
-    graph: &'a G,
+    nodes: HashMap<<G as GraphBase>::NodeId, NOW>,
+    edges: HashMap<<G as GraphBase>::EdgeId, EOW>,
+    edge_refs: HashMap<<G as GraphBase>::EdgeId, <G as IntoEdgeReferences>::EdgeRef>,
+    graph: G,
 }
 
 #[derive(Debug, Clone)]
@@ -27,61 +27,61 @@ enum Phase<'a, N, E, NOW, EOW> {
 
 pub struct OverlayedItems<'a, G, NOW, EOW>
 where
-    &'a G: GraphBase + Data + DataMap + IntoEdgeReferences,
+    G: GraphBase + Data + DataMap + IntoEdgeReferences,
 {
-    overlay: &'a Overlay<'a, G, NOW, EOW>,
+    overlay: &'a Overlay<G, NOW, EOW>,
     phase: Phase<
         'a,
-        <<&'a G as IntoEdgeReferences>::EdgeRef as EdgeRef>::NodeId,
-        <<&'a G as IntoEdgeReferences>::EdgeRef as EdgeRef>::EdgeId,
+        <<G as IntoEdgeReferences>::EdgeRef as EdgeRef>::NodeId,
+        <<G as IntoEdgeReferences>::EdgeRef as EdgeRef>::EdgeId,
         NOW,
         EOW,
     >,
-    node_indexes: HashMap<<<&'a G as IntoEdgeReferences>::EdgeRef as EdgeRef>::NodeId, usize>,
+    node_indexes: HashMap<<<G as IntoEdgeReferences>::EdgeRef as EdgeRef>::NodeId, usize>,
 }
 
-impl<'a, G, NOW, EOW> Overlay<'a, G, NOW, EOW>
+impl<G, NOW, EOW> Overlay<G, NOW, EOW>
 where
-    &'a G: GraphBase + Data + DataMap + IntoEdgeReferences,
-    <&'a G as GraphBase>::NodeId: Hash + Eq,
-    <&'a G as GraphBase>::EdgeId: Hash + Eq,
+    G: GraphBase + Data + DataMap + IntoEdgeReferences,
+    <G as GraphBase>::NodeId: Hash + Eq,
+    <G as GraphBase>::EdgeId: Hash + Eq,
 {
-    pub fn overlayed_elements(&'a self) -> OverlayedItems<'a, G, NOW, EOW> {
+    pub fn overlayed_elements<'b>(&'b self) -> OverlayedItems<'b, G, NOW, EOW> {
         OverlayedItems {
             overlay: self,
             phase: Phase::Nodes(self.nodes.iter()),
             node_indexes: HashMap::new(),
         }
     }
-    pub fn overlay_edge<'b>(&'b mut self, edge: <&'a G as IntoEdgeReferences>::EdgeRef, eow: EOW) {
+    pub fn overlay_edge<'b>(&'b mut self, edge: <G as IntoEdgeReferences>::EdgeRef, eow: EOW) {
         self.edges.insert(edge.id(), eow);
         self.edge_refs.insert(edge.id(), edge);
     }
-    pub fn overlay_node<'b>(&'b mut self, node: <&'a G as GraphBase>::NodeId, now: NOW) {
+    pub fn overlay_node<'b>(&'b mut self, node: <G as GraphBase>::NodeId, now: NOW) {
         self.nodes.insert(node, now);
     }
-    pub fn remove_edge<'b>(&'b mut self, edge: <&'a G as GraphBase>::EdgeId) {
+    pub fn remove_edge<'b>(&'b mut self, edge: <G as GraphBase>::EdgeId) {
         self.edges.remove(&edge);
         self.edge_refs.remove(&edge);
     }
-    pub fn remove_node<'b>(&'b mut self, node: <&'a G as GraphBase>::NodeId) {
+    pub fn remove_node<'b>(&'b mut self, node: <G as GraphBase>::NodeId) {
         self.nodes.remove(&node);
     }
 }
 
-impl<'a, G, NOW, EOW> Overlay<'a, G, NOW, EOW>
+impl<G, NOW, EOW> Overlay<G, NOW, EOW>
 where
-    &'a G: GraphBase
+    G: GraphBase
         + Data
         + DataMap
         + GraphProp
         + NodeIndexable
         + IntoNodeReferences
         + IntoEdgeReferences,
-    <&'a G as GraphBase>::EdgeId: Copy + Eq + Hash,
-    <&'a G as GraphBase>::NodeId: Copy + Eq + Hash,
-    <&'a G as Data>::NodeWeight: std::fmt::Display,
-    <&'a G as Data>::EdgeWeight: std::fmt::Display,
+    <G as GraphBase>::EdgeId: Copy + Eq + Hash,
+    <G as GraphBase>::NodeId: Copy + Eq + Hash,
+    <G as Data>::NodeWeight: std::fmt::Display,
+    <G as Data>::EdgeWeight: std::fmt::Display,
 {
     pub fn draw_overlayed<'b>(&'b self) {
         draw_graph_with_attr_getters(
@@ -113,15 +113,15 @@ where
 
 impl<'a, G, NOW, EOW> Iterator for OverlayedItems<'a, G, NOW, EOW>
 where
-    &'a G: GraphBase + Data + DataMap + IntoEdgeReferences,
-    <&'a G as Data>::NodeWeight: Clone,
-    <&'a G as Data>::EdgeWeight: Clone,
-    <&'a G as GraphBase>::EdgeId: Copy + Eq + Hash,
-    <&'a G as GraphBase>::NodeId: Copy + Eq + Hash,
+    G: GraphBase + Data + DataMap + IntoEdgeReferences,
+    <G as Data>::NodeWeight: Clone,
+    <G as Data>::EdgeWeight: Clone,
+    <G as GraphBase>::EdgeId: Copy + Eq + Hash,
+    <G as GraphBase>::NodeId: Copy + Eq + Hash,
     NOW: Clone,
     EOW: Clone,
 {
-    type Item = Element<<&'a G as Data>::NodeWeight, <&'a G as Data>::EdgeWeight>;
+    type Item = Element<<G as Data>::NodeWeight, <G as Data>::EdgeWeight>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Phase::Nodes(ref mut nodes) = self.phase {
@@ -173,15 +173,15 @@ where
     }
 }
 
-pub type Selection<'a, G> = Overlay<'a, G, (), ()>;
+pub type Selection<G> = Overlay<G, (), ()>;
 
-impl<'a, G> Selection<'a, G>
+impl<G> Selection<G>
 where
-    &'a G: GraphBase + Data + DataMap + IntoEdgeReferences,
-    <&'a G as GraphBase>::EdgeId: Copy + Eq + Hash,
-    <&'a G as GraphBase>::NodeId: Copy + Eq + Hash,
+    G: GraphBase + Data + DataMap + IntoEdgeReferences,
+    <G as GraphBase>::EdgeId: Copy + Eq + Hash,
+    <G as GraphBase>::NodeId: Copy + Eq + Hash,
 {
-    pub fn new(g: &'a G) -> Selection<'a, G> {
+    pub fn new(g: G) -> Selection<G> {
         Selection {
             nodes: HashMap::new(),
             edges: HashMap::new(),
@@ -189,10 +189,10 @@ where
             graph: g,
         }
     }
-    pub fn select_edge<'b>(&'b mut self, edge: <&'a G as IntoEdgeReferences>::EdgeRef) {
+    pub fn select_edge<'b>(&'b mut self, edge: <G as IntoEdgeReferences>::EdgeRef) {
         self.overlay_edge(edge, ());
     }
-    pub fn select_node<'b>(&'b mut self, node: <&'a G as GraphBase>::NodeId) {
+    pub fn select_node<'b>(&'b mut self, node: <G as GraphBase>::NodeId) {
         self.overlay_node(node, ());
     }
 }
